@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -30,7 +31,7 @@ func generateKey() string {
 	return uuid.New().String()[0:8]
 }
 
-func handleGenerateLink(w http.ResponseWriter, r *http.Request) {
+func serveGenerateLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL)
 	URI := r.URL.Query().Get("url")
 	key := generateKey()
@@ -38,7 +39,8 @@ func handleGenerateLink(w http.ResponseWriter, r *http.Request) {
 	cache[key] = URI
 	fmt.Fprintf(w, "%v mapped to %v", URI, key)
 }
-func handleGetLink(w http.ResponseWriter, r *http.Request) {
+
+func serveGetLink(w http.ResponseWriter, r *http.Request) {
 	key := chi.URLParam(r, "key")
 	URI, ok := cache[key]
 	fmt.Println(URI, ok, key)
@@ -47,6 +49,10 @@ func handleGetLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, URI, http.StatusSeeOther)
+}
+
+func serveHomePage(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "Home Page Reached")
 }
 
 func main() {
@@ -59,7 +65,8 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(httprate.LimitByIP(50, 1*time.Minute))
 
-	r.Get("/api/generatelink", handleGenerateLink)
-	r.Get("/api/getlink/{key}", handleGetLink)
+	r.Get("/", serveHomePage)
+	r.Get("/api/generatelink", serveGenerateLink)
+	r.Get("/api/getlink/{key}", serveGetLink)
 	http.ListenAndServe(":8080", r)
 }
