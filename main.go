@@ -56,6 +56,9 @@ func serveHomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if PORT == "" {
+		PORT = "8080"
+	}
 	cache = make(map[string]string)
 	r := chi.NewRouter()
 
@@ -68,5 +71,7 @@ func main() {
 	r.Get("/", serveHomePage)
 	r.Get("/api/generatelink", serveGenerateLink)
 	r.Get("/api/getlink/{key}", serveGetLink)
-	http.ListenAndServe(":8080", r)
+
+	fmt.Printf("Listening on port %v\n", PORT)
+	http.ListenAndServe(":"+PORT, r)
 }
